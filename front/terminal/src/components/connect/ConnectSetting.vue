@@ -129,10 +129,10 @@ import { ElMessage } from 'element-plus';
 import OptionBlock from './OptionBlock';
 import PrivateKey from './PrivateKey';
 import ToolTip from '@/components/common/ToolTip';
-import { getPureUrl } from '@/utils/UrlUtil';
+import { getPureUrl } from '@/utils/Url';
 import { HomeFilled, Paperclip, User, Lock, DocumentCopy, View, Hide, Edit, Finished, Switch, ArrowDown, Key } from '@element-plus/icons-vue';
 import i18n from "@/locales/i18n";
-import { isIP, isFQDN } from '@/utils/IPUtil';
+import { isIP, isFQDN } from '@/utils/IP';
 
 export default {
   name: 'ConnectSetting',

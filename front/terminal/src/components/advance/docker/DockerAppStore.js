@@ -1,5 +1,5 @@
 import i18n from "@/locales/i18n";
-import { generateRandomString } from "@/utils/StringUtil";
+import { generateRandomString } from "@/utils/String";
 
 export const dockerAppTypes = [
     i18n.global.k('全部'),

@@ -19,7 +19,7 @@ export const request = (options) => {
     return $.ajax(options);
 };
 
-export const ajaxSetup = () => {
+export const setupAjax = () => {
     $.ajaxSetup({
         cache: false,                   // 禁用缓存
         processData: true,

@@ -55,7 +55,7 @@ import 'ace-builds/src-noconflict/snippets/xml';
 import 'ace-builds/src-noconflict/snippets/yaml';
 
 import langToMode from '@/components/preview/Lang';
-import { userTCodeExecutorCompleter } from '@/components/tcode/TCode';
+import { userCmdCodeExecutorCompleter } from '@/components/cmdcode/CmdCode';
 
 export default {
   name: 'AceEditor',
@@ -160,7 +160,7 @@ export default {
         mode: 'ace/mode/text',                                // 高亮
       });
       // 自定义智能提示
-      aceEditor.value.completers.push(userTCodeExecutorCompleter);
+      aceEditor.value.completers.push(userCmdCodeExecutorCompleter);
 
       // 禁用 Web Workers
       aceEditor.value.session.setOption("useWorker", false);

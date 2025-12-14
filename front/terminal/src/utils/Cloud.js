@@ -1,8 +1,8 @@
 import { aesDecrypt, aesEncrypt } from '@/utils/Encrypt';
-import { generateRandomString } from '@/utils/StringUtil';
+import { generateRandomString } from '@/utils/String';
 
-import { request } from "@/utils/RequestUtil";
-import { http_base_url } from '@/env/BaseUrl';
+import { request } from "@/utils/Request";
+import { http_base_url } from '@/env/Base';
 import { ElMessage } from 'element-plus';
 import i18n from "@/locales/i18n";
 import { localStore, cloudStore } from "@/env/Store";
@@ -91,16 +91,19 @@ export const cloudDownload = async (fileName) => {
   });
 };
 
-// 需要同步的内容
-const syncArr = Object.values(cloudStore);
+// 同步项
+const syncItems = Object.values(cloudStore);
 
 export const syncUpload = async (items) => {
-  const syncItems = items || syncArr;
+  const uploadItems = syncItems.filter((syncItem) => {
+    return !items || items.includes(syncItem);
+  });
+  if(uploadItems.length === 0) return;
   const promises = [];
-  for(let i = 0; i < syncItems.length; i++) {
-    const content = localStorage.getItem(syncItems[i]);
+  for(const uploadItem of uploadItems) {
+    const content = localStorage.getItem(uploadItem);
     if(content) {
-      const promise = cloudUpload(syncItems[i], '', aesDecrypt(content));
+      const promise = cloudUpload(uploadItem, '', aesDecrypt(content));
       promises.push(promise);
     }
   }
@@ -112,13 +115,14 @@ export const syncDownload = async (userInfo) => {
   if(userInfo) localStorage.setItem(localStore['user'], userInfo);
   const promises = [];
   const uploadItems = [];
-  for(let i = 0; i < syncArr.length; i++) {
-    const promise = cloudDownload(syncArr[i]);
+  const downloadItems = [...syncItems];
+  for(const downloadItem of downloadItems) {
+    const promise = cloudDownload(downloadItem);
     promise.then((content) => {
-      if(content) localStorage.setItem(syncArr[i], aesEncrypt(JSON.stringify(content)));
+      if(content) localStorage.setItem(downloadItem, aesEncrypt(JSON.stringify(content)));
       else {
-        if(userInfo) localStorage.removeItem(syncArr[i]);
-        else if(localStorage.getItem(syncArr[i])) uploadItems.push(syncArr[i]);
+        if(userInfo) localStorage.removeItem(downloadItem);
+        else if(localStorage.getItem(downloadItem)) uploadItems.push(downloadItem);
       }
     });
     promises.push(promise);

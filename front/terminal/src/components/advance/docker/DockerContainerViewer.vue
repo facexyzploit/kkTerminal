@@ -27,8 +27,8 @@
 
 <script>
 import { ref } from "vue";
-import { request } from "@/utils/RequestUtil";
-import { http_base_url } from "@/env/BaseUrl";
+import { request } from "@/utils/Request";
+import { http_base_url } from "@/env/Base";
 import AceEditor from '@/components/common/AceEditor';
 import { ElMessage } from "element-plus";
 import FileIcons from "file-icons-vue";

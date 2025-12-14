@@ -1,5 +1,5 @@
 /**
- * source: validator.js
+ * Source: https://github.com/validatorjs/validator.js
  */
 const IPv4SegmentFormat = '(?:[0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])';
 const IPv4AddressFormat = `(${IPv4SegmentFormat}[.]){3}${IPv4SegmentFormat}`;
@@ -35,7 +35,7 @@ export const isIP = (ipAddress, options = {}) => {
     }
 
     return false;
-}
+};
 
 const options = {
     require_tld: true,
@@ -108,4 +108,4 @@ export const isFQDN = (str) => {
 
         return true;
     });
-}
+};

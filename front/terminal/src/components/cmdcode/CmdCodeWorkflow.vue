@@ -5,7 +5,7 @@
         :before-close="closeDialog"
         destroy-on-close
         :width="550"
-        :title="$t('终端代码工作流')"
+        :title="$t('命令代码工作流')"
         :modal="false"
         modal-class="kk-dialog-class"
         header-class="kk-header-class"
@@ -18,7 +18,7 @@
           <div class="kk-flex" >
             <div class="no-select nowrap form-width" >{{ $t('名称') }}{{ $t('：') }}</div>
             <div class="no-select nowrap" style="background-color: #f3f4f4; margin-right: 8px;" >U</div>
-            <el-input size="small" :style="{width: '190px'}" v-model="userTCodeInfo.name" class="w-50 m-2" :placeholder="$t('输入终端代码名称')" maxlength="5" minlength="1" >
+            <el-input size="small" :style="{width: '200px'}" v-model="userCmdCodeInfo.name" class="w-50 m-2" :placeholder="$t('输入命令代码名称')" maxlength="5" minlength="1" >
               <template #prefix>
                 <el-icon class="el-input__icon" ><CollectionTag /></el-icon>
               </template>
@@ -28,7 +28,7 @@
               <el-upload
                   :show-file-list="false"
                   :with-credentials="false"
-                  :http-request="importTCodes"
+                  :http-request="importCmdCodes"
                   :multiple="false"
               >
                 <el-button size="small" type="primary" >
@@ -39,14 +39,14 @@
           </div>
           <div class="kk-flex" >
             <div class="no-select nowrap form-width" style="margin-right: 2px;" >{{ $t('描述') }}{{ $t('：') }}</div>
-            <el-input size="small" :style="{width: '206px'}" v-model="userTCodeInfo.desc" class="w-50 m-2" :placeholder="$t('输入终端代码描述')" >
+            <el-input size="small" :style="{width: '216px'}" v-model="userCmdCodeInfo.desc" class="w-50 m-2" :placeholder="$t('输入命令代码描述')" >
               <template #prefix>
                 <el-icon class="el-input__icon" ><EditPen /></el-icon>
               </template>
             </el-input>
             <div style="flex: 1;" ></div>
             <div>
-              <el-button size="small" type="primary" @click="exportTCodes" >
+              <el-button size="small" type="primary" @click="exportCmdCodes" >
                 <el-icon class="el-icon--left" ><Download /></el-icon> {{ $t('导出') }}
               </el-button>
             </div>
@@ -72,7 +72,7 @@
             </div>
           </div>
           <div style="width: 100%; height: 30vh;" >
-            <AceEditor ref="userTCodeEditorRef" @handleSave="handleSave" ></AceEditor>
+            <AceEditor ref="userCmdCodeEditorRef" @handleSave="handleSave" ></AceEditor>
           </div>
         </div>
         <div style="display: flex;" >
@@ -94,10 +94,10 @@ import AceEditor from '@/components/common/AceEditor';
 import { CollectionTag, EditPen, Upload, Download, Refresh, Finished, DocumentDelete } from '@element-plus/icons-vue';
 import i18n from "@/locales/i18n";
 import { localStore } from "@/env/Store";
-import { localStoreUtil } from "@/utils/CloudUtil";
+import { localStoreUtil } from "@/utils/Cloud";
 
 export default {
-  name: 'TCodeWorkflow',
+  name: 'CmdCodeWorkflow',
   components: {
     AceEditor,
     CollectionTag,
@@ -126,15 +126,15 @@ if(resultArr.length >= 2) {
 const jar = 'kkTerminal.jar';
 await kkTerminal.write('nohup java -jar ./' + jar + ' > ./out.log &', 1200);`;
 
-    const userTCodeEditorRef = ref();
-    const userTCodeInfo = ref({
+    const userCmdCodeEditorRef = ref();
+    const userCmdCodeInfo = ref({
       name: '',
       desc: '',
     });
 
     // 保存
     const handleSave = (text) => {
-      localStoreUtil.setItem(localStore['tcode-draft'], text);
+      localStoreUtil.setItem(localStore['cmdcode-draft'], text);
       ElMessage({
         message: i18n.global.t('保存成功'),
         type: 'success',
@@ -143,14 +143,14 @@ await kkTerminal.write('nohup java -jar ./' + jar + ' > ./out.log &', 1200);`;
       });
     };
     const setValue = (text) => {
-      userTCodeEditorRef.value.setValue(text);
+      userCmdCodeEditorRef.value.setValue(text);
     };
     const initText = () => {
       // 工作流仅支持JS语法
-      userTCodeEditorRef.value.setLanguage('kk.js');
+      userCmdCodeEditorRef.value.setLanguage('kk.js');
       // 加载Draft
-      if(localStoreUtil.getItem(localStore['tcode-draft'])) {
-        userTCodeEditorRef.value.setValue(localStoreUtil.getItem(localStore['tcode-draft']));
+      if(localStoreUtil.getItem(localStore['cmdcode-draft'])) {
+        userCmdCodeEditorRef.value.setValue(localStoreUtil.getItem(localStore['cmdcode-draft']));
       }
     };
     // 仅有数字字母组成
@@ -159,29 +159,29 @@ await kkTerminal.write('nohup java -jar ./' + jar + ' > ./out.log &', 1200);`;
       return regex.test(str);
     };
 
-    // 导入导出终端代码
-    const importTCodes = (data) => {
+    // 导入导出命令代码
+    const importCmdCodes = (data) => {
       const file = data.file;
       const fileReader = new FileReader();
       fileReader.onload = () => {
         try {
-          const tcodes = JSON.parse(fileReader.result);
+          const cmdcodes = JSON.parse(fileReader.result);
           const data = {};
           // 统计成功/失败数
           let scnt = 0;
           let fcnt = 0;
-          for (const key in tcodes) {
+          for (const key in cmdcodes) {
             if(key && key.length >= 2 && key.length <= 6 && (key[0] === 'U' || key[0] === 'u') && isAlphaNumeric(key)) {
               data[key.toUpperCase()] = {
-                desc: tcodes[key].desc || '',
-                workflow:  tcodes[key].workflow || '',
+                desc: cmdcodes[key].desc || '',
+                workflow: cmdcodes[key].workflow || '',
                 status: 'Not Active',
               };
               scnt++;
             }
             else {
               ElMessage({
-                message: i18n.global.t('终端代码') + ' ' + key + ' ' + i18n.global.t('名称非法'),
+                message: i18n.global.t('命令代码') + ' ' + key + ' ' + i18n.global.t('名称非法'),
                 type: 'error',
                 grouping: true,
               });
@@ -190,7 +190,7 @@ await kkTerminal.write('nohup java -jar ./' + jar + ' > ./out.log &', 1200);`;
           }
           // 全部成功
           if(fcnt === 0) {
-            context.emit('importTCodes', data);
+            context.emit('importCmdCodes', data);
             ElMessage({
               message: i18n.global.t('导入成功'),
               type: 'success',
@@ -201,14 +201,14 @@ await kkTerminal.write('nohup java -jar ./' + jar + ' > ./out.log &', 1200);`;
           // 全部失败
           else if(scnt === 0) {
             ElMessage({
-              message: i18n.global.t('导入失败：无合法终端代码'),
+              message: i18n.global.t('导入失败：无合法命令代码'),
               type: 'error',
               grouping: true,
             });
           }
           // 部分成功
           else {
-            context.emit('importTCodes', data);
+            context.emit('importCmdCodes', data);
             ElMessage({
               message: i18n.global.t('导入成功：') + scnt + i18n.global.t('个') + i18n.global.t('，导入失败：') + fcnt + i18n.global.t('个'),
               type: 'warning',
@@ -236,8 +236,8 @@ await kkTerminal.write('nohup java -jar ./' + jar + ' > ./out.log &', 1200);`;
       loading.value = true;
       fileReader.readAsText(file);
     };
-    const exportTCodes = () => {
-      context.emit('exportTCodes');
+    const exportCmdCodes = () => {
+      context.emit('exportCmdCodes');
       ElMessage({
         message: i18n.global.t('导出成功'),
         type: 'success',
@@ -250,35 +250,35 @@ await kkTerminal.write('nohup java -jar ./' + jar + ' > ./out.log &', 1200);`;
       switch(type) {
         case 1:
           // 刷新
-          localStoreUtil.removeItem(localStore['tcode-draft']);
+          localStoreUtil.removeItem(localStore['cmdcode-draft']);
           setValue(workflowTemplate);
           break;
         case 2:
           // 删除
-          localStoreUtil.removeItem(localStore['tcode-draft']);
+          localStoreUtil.removeItem(localStore['cmdcode-draft']);
           setValue('');
           break;
         case 3:
           // 保存
-          handleSave(userTCodeEditorRef.value.getValue());
+          handleSave(userCmdCodeEditorRef.value.getValue());
           break;
       }
     };
 
-    // 添加终端代码确定
+    // 添加命令代码确定
     const confirm = () => {
-      if(!(userTCodeInfo.value.name && userTCodeInfo.value.name.length >= 1 && userTCodeInfo.value.name.length <= 5)) {
+      if(!(userCmdCodeInfo.value.name && userCmdCodeInfo.value.name.length >= 1 && userCmdCodeInfo.value.name.length <= 5)) {
         ElMessage({
-          message: i18n.global.t('终端代码名称不能为空'),
+          message: i18n.global.t('命令代码名称不能为空'),
           type: 'error',
           grouping: true,
           repeatNum: Number.MIN_SAFE_INTEGER,
         });
         return;
       }
-      if(!isAlphaNumeric(userTCodeInfo.value.name)) {
+      if(!isAlphaNumeric(userCmdCodeInfo.value.name)) {
         ElMessage({
-          message: i18n.global.t('终端代码只能由字母和数字组成'),
+          message: i18n.global.t('命令代码名称只能由字母和数字组成'),
           type: 'error',
           grouping: true,
           repeatNum: Number.MIN_SAFE_INTEGER,
@@ -286,27 +286,27 @@ await kkTerminal.write('nohup java -jar ./' + jar + ' > ./out.log &', 1200);`;
         return;
       }
       const data = {};
-      data['U' + userTCodeInfo.value.name.toUpperCase()] = {
-        desc: userTCodeInfo.value.desc,
-        workflow: userTCodeEditorRef.value.getValue(),
+      data['U' + userCmdCodeInfo.value.name.toUpperCase()] = {
+        desc: userCmdCodeInfo.value.desc,
+        workflow: userCmdCodeEditorRef.value.getValue(),
         status: 'Not Active',
       };
-      context.emit('importTCodes', data);
+      context.emit('importCmdCodes', data);
       ElMessage({
         message: i18n.global.t('添加成功'),
         type: 'success',
         grouping: true,
       });
-      localStoreUtil.removeItem(localStore['tcode-draft']);
+      localStoreUtil.removeItem(localStore['cmdcode-draft']);
       closeDialog();
     };
 
     // 重置
     const reset = () => {
-      if(userTCodeEditorRef.value) userTCodeEditorRef.value.reset();
+      if(userCmdCodeEditorRef.value) userCmdCodeEditorRef.value.reset();
       loading.value = false;
-      userTCodeInfo.value.name = '';
-      userTCodeInfo.value.desc = '';
+      userCmdCodeInfo.value.name = '';
+      userCmdCodeInfo.value.desc = '';
       DialogVisible.value = false;
     };
 
@@ -324,13 +324,13 @@ await kkTerminal.write('nohup java -jar ./' + jar + ' > ./out.log &', 1200);`;
       confirm,
       closeDialog,
       reset,
-      userTCodeEditorRef,
+      userCmdCodeEditorRef,
       handleSave,
       initText,
       loading,
-      userTCodeInfo,
-      importTCodes,
-      exportTCodes,
+      userCmdCodeInfo,
+      importCmdCodes,
+      exportCmdCodes,
       setValue,
       workflowTab,
     }

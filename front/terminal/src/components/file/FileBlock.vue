@@ -167,16 +167,16 @@
 <script>
 import { ref, onUnmounted, onMounted, watch } from 'vue';
 import useClipboard from "vue-clipboard3";
-import { request } from "@/utils/RequestUtil";
+import { request } from "@/utils/Request";
 import { ElMessage } from 'element-plus';
 import { deleteDialog } from "@/components/common/DeleteDialog";
-import { http_base_url } from '@/env/BaseUrl';
+import { http_base_url } from '@/env/Base';
 import { Refresh, Fold, Download, Upload, DocumentAdd, FolderAdd, Link, ArrowRight, Monitor } from '@element-plus/icons-vue';
-import { escapeItem, escapePath, osFileNaturalSort } from '@/utils/StringUtil';
+import { escapeItem, escapePath, osFileNaturalSort } from '@/utils/String';
 import { isZipFile } from '@/components/preview/FileSuffix';
 import { getChmodValue } from '@/components/calc/CalcPriority';
-import { getUrlParams, doUrlDownload } from "@/utils/UrlUtil";
-import { TCodeReservedVarsSetter } from "@/components/tcode/TCode";
+import { getUrlParams, doUrlDownload } from "@/utils/Url";
+import { CmdCodeReservedVarsSetter } from "@/components/cmdcode/CmdCode";
 
 import ToolTip from '@/components/common/ToolTip';
 import NoData from '@/components/common/NoData';
@@ -324,7 +324,7 @@ export default {
             files.value = [];
             getDirList();
             // 预留值
-            TCodeReservedVarsSetter('home', dir.value);
+            CmdCodeReservedVarsSetter('home', dir.value);
           }
           else {
             noDataMsg.value = resp.info;
@@ -344,20 +344,20 @@ export default {
         getInitDir();
         return;
       }
-      const now_dir = dir.value;
+      const currentDir = dir.value;
       await request({
         url: http_base_url + '/file/ls',
         type: 'get',
         data: {
           sshKey: props.sshKey,
-          path: now_dir,
+          path: currentDir,
         },
         beforeSend() {      // 发送请求前执行的方法
           loading.value = true;
           files.value = [];
         },
         success(resp) {
-          if(now_dir === dir.value) {
+          if(currentDir === dir.value) {
             selectedFiles.value = [];
             if(resp.status === 'success') {
               files.value = osFileNaturalSort(resp.data);
@@ -369,14 +369,14 @@ export default {
                 fileAreaRef.value.focus();
               }, 1);
               if(fileAttrRef.value && fileAttrRef.value.DialogVisible) {
-                const nowFileInfo = getFileInfoByName(fileAttrRef.value.fileInfo.name);
-                if(nowFileInfo) {
+                const currentFileInfo = getFileInfoByName(fileAttrRef.value.fileInfo.name);
+                if(currentFileInfo) {
                   fileAttrRef.value.reset();
                   fileAttrRef.value.DialogVisible = true;
-                  fileAttrRef.value.fileInfo = nowFileInfo;
+                  fileAttrRef.value.fileInfo = currentFileInfo;
                   fileAttrRef.value.fileDir = dir.value;
-                  fileAttrRef.value.rename = nowFileInfo.name;
-                  if(nowFileInfo.isDirectory) fileAttrRef.value.getFolderInclude();
+                  fileAttrRef.value.rename = currentFileInfo.name;
+                  if(currentFileInfo.isDirectory) fileAttrRef.value.getFolderInclude();
                   else fileAttrRef.value.getFileSize();
                 }
                 else fileAttrRef.value.closeDialog();
@@ -395,7 +395,7 @@ export default {
           }
         },
         complete() {        // 发送请求完成后执行的方法
-          if(now_dir === dir.value) loading.value = false;
+          if(currentDir === dir.value) loading.value = false;
         }
       });
     };
@@ -699,7 +699,7 @@ export default {
         }
         // 文件夹类型
         else if(!item.isFile && item.isDirectory) {
-          const nowPath = basePath + item.name;
+          const currentPath = basePath + item.name;
           request({
             url: http_base_url + '/file/mkdir',
             type: 'post',
@@ -711,7 +711,7 @@ export default {
             success(resp) {
               if(resp.status === 'success') {
                 getDirList();
-                folderUpload(item, nowPath + '/');
+                folderUpload(item, currentPath + '/');
               }
               else {
                 ElMessage({
@@ -739,7 +739,7 @@ export default {
           }
           // 文件夹类型
           else if(!item.isFile && item.isDirectory) {
-            const nowPath = basePath + item.name;
+            const currentPath = basePath + item.name;
             request({
               url: http_base_url + '/file/mkdir',
               type: 'post',
@@ -750,7 +750,7 @@ export default {
               },
               success(resp) {
                 if(resp.status === 'success') {
-                  folderUpload(item, nowPath + '/');
+                  folderUpload(item, currentPath + '/');
                 }
                 else {
                   ElMessage({
@@ -811,7 +811,7 @@ export default {
           break;
         // 新建
         case 5:
-          mkFileRef.value.nowDir = dir.value;
+          mkFileRef.value.currentDir = dir.value;
           mkFileRef.value.DialogVisible = true;
           break;
         // 重命名
@@ -953,13 +953,13 @@ export default {
     };
     // 新建文件/文件夹
     const mkFileRef = ref();
-    const handleMkFile = (isFolder, name, nowDir) => {
+    const handleMkFile = (isFolder, name, currentDir) => {
       request({
         url: http_base_url + (isFolder ? '/file/mkdir' : '/file/touch'),
         type: 'post',
         data: {
           sshKey: props.sshKey,
-          path: isFolder ? nowDir : escapePath(nowDir),
+          path: isFolder ? currentDir : escapePath(currentDir),
           item: isFolder ? name : escapeItem(name),
         },
         success(resp) {
@@ -978,7 +978,7 @@ export default {
       if(fileUrlRef.value) fileUrlRef.value.closeDialog();
       if(fileAttrRef.value) fileAttrRef.value.closeDialog();
       // 预留值
-      TCodeReservedVarsSetter('dir', newVal);
+      CmdCodeReservedVarsSetter('dir', newVal);
     });
 
     // 滚动到可视区
@@ -1158,9 +1158,9 @@ export default {
       folderInputUpload(basePath,filesArr,0);
     };
     // 文件夹input框上传
-    const folderInputUpload = (basePath,filesArr,now) => {
+    const folderInputUpload = (basePath, filesArr, current) => {
       // 父目录创建
-      const fileObj = filesArr[now];
+      const fileObj = filesArr[current];
       request({
         url: http_base_url + '/file/mkdir',
         type: 'post',
@@ -1171,8 +1171,8 @@ export default {
         },
         success(resp) {
           if(resp.status === 'success') {
-            if(now === 0) getDirList();
-            if(now < filesArr.length - 1) folderInputUpload(basePath,filesArr, now+1);
+            if(current === 0) getDirList();
+            if(current < filesArr.length - 1) folderInputUpload(basePath,filesArr, current + 1);
             // 子文件上传
             for(let i=0;i<fileObj.files.length;i++) {
               const file = fileObj.files[i];

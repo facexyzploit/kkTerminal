@@ -1,15 +1,15 @@
 import { aesEncrypt, aesDecrypt } from '@/utils/Encrypt';
 import { localStore, sessionStore } from "@/env/Store";
-import { localStoreUtil } from "@/utils/CloudUtil";
+import { localStoreUtil } from "@/utils/Cloud";
 import { calcPriority } from '@/components/calc/CalcPriority';
 import { toRaw } from 'vue';
 import i18n from "@/locales/i18n";
 
-const storageLocalKey = localStore['tcode-vars'];
-const storageSessionPrefix = sessionStore['tcode-vars'];
+const storageLocalKey = localStore['cmdcode-vars'];
+const storageSessionPrefix = sessionStore['cmdcode-vars'];
 
-// 功能终端代码, 以 F 开头
-export const FuncTCode = {
+// 功能命令代码, 以 F 开头
+export const FuncCmdCode = {
     'FS': {
         desc: i18n.global.k('重启终端'),
         execFlow(context) {
@@ -43,8 +43,8 @@ export const FuncTCode = {
     },
 };
 
-// 系统终端代码, 以 S 开头
-export const SysTCode = {
+// 系统命令代码, 以 S 开头
+export const SysCmdCode = {
     'SC': {
         desc: i18n.global.k('连接设置'),
         execFlow(context) {
@@ -81,33 +81,33 @@ export const SysTCode = {
             context.proxy.doSettings(8);
         }
     },
-    'STC': {
-        desc: i18n.global.k('终端代码中心'),
+    'SCCC': {
+        desc: i18n.global.k('命令代码中心'),
         execFlow(context) {
-            context.proxy.tCodeCenterRef.DialogVisible = true;
+            context.proxy.cmdCodeCenterRef.DialogVisible = true;
         }
     },
-    'STW': {
-        desc: i18n.global.k('终端代码工作流'),
+    'SCCW': {
+        desc: i18n.global.k('命令代码工作流'),
         execFlow(context) {
             setTimeout(() => {
-                context.proxy.tCodeWorkflowRef.initText();
+                context.proxy.cmdCodeWorkflowRef.initText();
             }, 1);
-            context.proxy.tCodeWorkflowRef.DialogVisible = true;
+            context.proxy.cmdCodeWorkflowRef.DialogVisible = true;
         }
     },
 };
 
-// 用户终端代码, 以 U 开头
-export const UserTCodeExecutor = {
+// 用户命令代码, 以 U 开头
+export const UserCmdCodeExecutor = {
     // 文件
     file: {
         async cd(dir) {
-            await UserTCodeHelper.fileBlockRef.fileBlockView(dir);
+            await UserCmdCodeHelper.fileBlockRef.fileBlockView(dir);
         },
         async ls(dir) {
             await this.cd(dir);
-            return toRaw(UserTCodeHelper.fileBlockRef.files).map((file) => {
+            return toRaw(UserCmdCodeHelper.fileBlockRef.files).map((file) => {
                 return {
                     permission: calcPriority(file.attributes.mode.type, file.attributes.permissions),
                     uID: file.attributes.uID,
@@ -119,32 +119,32 @@ export const UserTCodeExecutor = {
             });
         },
         pwd() {
-            return toRaw(UserTCodeHelper.fileBlockRef.dir);
+            return toRaw(UserCmdCodeHelper.fileBlockRef.dir);
         },
         async open(path, config={}) {
-            const { dir, name } = UserTCodeHelper.parsePath(path);
-            const fileInfo = await UserTCodeHelper.fileBlockRef.fileBlockView(dir, name);
-            if(fileInfo && !fileInfo.isDirectory) await UserTCodeHelper.fileBlockRef.preViewFile(name, config);
+            const { dir, name } = UserCmdCodeHelper.parsePath(path);
+            const fileInfo = await UserCmdCodeHelper.fileBlockRef.fileBlockView(dir, name);
+            if(fileInfo && !fileInfo.isDirectory) await UserCmdCodeHelper.fileBlockRef.preViewFile(name, config);
             else throw new Error(i18n.global.t('无法打开文件：') + name);
         },
         edit(editFlow) {
-            if(editFlow && editFlow instanceof Function) editFlow(UserTCodeHelper.fileBlockRef.filePreviewRef.codeEditorRef.aceEditor);
+            if(editFlow && editFlow instanceof Function) editFlow(UserCmdCodeHelper.fileBlockRef.filePreviewRef.codeEditorRef.aceEditor);
         },
         save(encode) {
-            const filePreviewInstance = UserTCodeHelper.fileBlockRef.filePreviewRef;
+            const filePreviewInstance = UserCmdCodeHelper.fileBlockRef.filePreviewRef;
             if(encode) filePreviewInstance.saveEncode = encode;
             filePreviewInstance.handleSave(filePreviewInstance.codeEditorRef.getValue());
         },
         close(block=false) {
-            if(block) UserTCodeHelper.fileBlockRef.closeDialog();
-            else UserTCodeHelper.fileBlockRef.filePreviewRef.closeDialog();
+            if(block) UserCmdCodeHelper.fileBlockRef.closeDialog();
+            else UserCmdCodeHelper.fileBlockRef.filePreviewRef.closeDialog();
         },
         async download(path) {
-            const { dir, name } = UserTCodeHelper.parsePath(path);
-            const fileInfo = await UserTCodeHelper.fileBlockRef.fileBlockView(dir, name);
+            const { dir, name } = UserCmdCodeHelper.parsePath(path);
+            const fileInfo = await UserCmdCodeHelper.fileBlockRef.fileBlockView(dir, name);
             if(fileInfo) {
-                if(fileInfo.isDirectory) UserTCodeHelper.fileBlockRef.downloadDir(name);
-                else UserTCodeHelper.fileBlockRef.downloadRemoteFile(name);
+                if(fileInfo.isDirectory) UserCmdCodeHelper.fileBlockRef.downloadDir(name);
+                else UserCmdCodeHelper.fileBlockRef.downloadRemoteFile(name);
             }
             else throw new Error(i18n.global.t('无法下载文件：') + name);
         },
@@ -159,29 +159,29 @@ export const UserTCodeExecutor = {
             }
         },
         local(key, value) {
-            let tCodeLocalVars = {};
+            let cmdCodeLocalVars = {};
             if(localStoreUtil.getItem(storageLocalKey)) {
-                tCodeLocalVars = JSON.parse(aesDecrypt(localStoreUtil.getItem(storageLocalKey)));
+                cmdCodeLocalVars = JSON.parse(aesDecrypt(localStoreUtil.getItem(storageLocalKey)));
             }
             if(value) {
-                tCodeLocalVars[key] = value;
-                localStoreUtil.setItem(storageLocalKey, aesEncrypt(JSON.stringify(tCodeLocalVars)));
+                cmdCodeLocalVars[key] = value;
+                localStoreUtil.setItem(storageLocalKey, aesEncrypt(JSON.stringify(cmdCodeLocalVars)));
             }
-            else return tCodeLocalVars[key];
+            else return cmdCodeLocalVars[key];
         },
         clean() {
             if(arguments.length === 0) {
                 localStoreUtil.removeItem(storageLocalKey);
                 return;
             }
-            let tCodeLocalVars = {};
+            let cmdCodeLocalVars = {};
             if(localStoreUtil.getItem(storageLocalKey)) {
-                tCodeLocalVars = JSON.parse(aesDecrypt(localStoreUtil.getItem(storageLocalKey)));
+                cmdCodeLocalVars = JSON.parse(aesDecrypt(localStoreUtil.getItem(storageLocalKey)));
             }
             for (let i = 0; i < arguments.length; i++) {
-                delete tCodeLocalVars[arguments[i]];
+                delete cmdCodeLocalVars[arguments[i]];
             }
-            localStoreUtil.setItem(storageLocalKey,aesEncrypt(JSON.stringify(tCodeLocalVars)));
+            localStoreUtil.setItem(storageLocalKey,aesEncrypt(JSON.stringify(cmdCodeLocalVars)));
         }
     },
     // 写入后等待
@@ -189,29 +189,29 @@ export const UserTCodeExecutor = {
         content = content.toString();
         if(!content) content = '\n';
         else if(!content.endsWith('\n') && !content.endsWith('\r')) content += '\n';
-        UserTCodeHelper.cnt = UserTCodeHelper.outArray.length;
-        UserTCodeHelper.writeNoAwait(content, true);
+        UserCmdCodeHelper.cnt = UserCmdCodeHelper.outArray.length;
+        UserCmdCodeHelper.writeNoAwait(content, true);
         await new Promise(resolve => setTimeout(resolve, Math.max(200, time)));
         return this.read();
     },
     // 读取输出
     read() {
-        return filter(UserTCodeHelper.outArray.slice(UserTCodeHelper.cnt));
+        return filter(UserCmdCodeHelper.outArray.slice(UserCmdCodeHelper.cnt));
     },
     // 读取全部输出
     readAll() {
-        return filter(UserTCodeHelper.outArray.slice(0));
+        return filter(UserCmdCodeHelper.outArray.slice(0));
     },
     // 隐藏
     hide() {
-        UserTCodeHelper.display = false;
+        UserCmdCodeHelper.display = false;
     },
     // 显示
     show() {
-        UserTCodeHelper.display = true;
+        UserCmdCodeHelper.display = true;
     },
 };
-export const UserTCodeHelper = {
+export const UserCmdCodeHelper = {
     name: '',
     active: false,
     display: true,
@@ -235,13 +235,13 @@ export const UserTCodeHelper = {
     },
 };
 
-const TCodeReservedVarsDict = {
+const CmdCodeReservedVarsDict = {
     'option': 'CONNECT_OPTION',
     'home': 'HOME_PATH',
     'dir': 'CURRENT_DIR',
 };
-export const TCodeReservedVarsSetter = (key, val) => {
-    UserTCodeExecutor.var.session(TCodeReservedVarsDict[key], val);
+export const CmdCodeReservedVarsSetter = (key, val) => {
+    UserCmdCodeExecutor.var.session(CmdCodeReservedVarsDict[key], val);
 };
 
 // 处理过滤输出
@@ -272,12 +272,12 @@ const filterANSI = (str) => {
     return stripAnsi(str).replace(/[\x00-\x1F\x7F]/g, '');
 };
 
-// 用户终端代码状态枚举
+// 用户命令代码状态枚举
 // Error-编译失败: Compile Error
 // Interrupted-执行中断: Execute Interrupt
 // Inactive-未被使用: Not Active
 // Success-执行成功: Execute Success
-export const TCodeStatusEnum = {
+export const CmdCodeStatusEnum = {
     'Compile Error': 'Error',
     'Execute Interrupt': 'Interrupted',
     'Not Active': 'Inactive',
@@ -285,9 +285,9 @@ export const TCodeStatusEnum = {
 };
 
 // 编辑器添加kkTerminal智能提示
-export const userTCodeExecutorCompleter = {
+export const userCmdCodeExecutorCompleter = {
   getCompletions(editor, session, pos, prefix, callback) {
-    const userTCodeExecutorCompletions = [
+    const userCmdCodeExecutorCompletions = [
         {
             name: "kkTerminal",
             value: "kkTerminal",
@@ -411,19 +411,19 @@ export const userTCodeExecutorCompleter = {
             name: "hide",
             value: "hide()",
             meta: "kkTerminal",
-            description: "hide Terminal Code display",
+            description: "hide Command Code display",
             score: 1000,
         },
         {
             name: "show",
             value: "show()",
             meta: "kkTerminal",
-            description: "show Terminal Code display",
+            description: "show Command Code display",
             score: 1000,
         }
     ];
 
-    callback(null, userTCodeExecutorCompletions.map((completion) => {
+    callback(null, userCmdCodeExecutorCompletions.map((completion) => {
       return {
         caption: completion.caption || completion.name,
         value: completion.value,
@@ -434,27 +434,27 @@ export const userTCodeExecutorCompleter = {
   }
 };
 
-// 历史终端代码
-export const historyTCode = {
-    tCodes: [],
+// 历史命令代码
+export const historyCmdCode = {
+    cmdCodes: [],
     index: 0,
-    add(latestTCode) {
-        this.tCodes.push(latestTCode);
-        this.index = this.tCodes.length;
+    add(latestCmdCode) {
+        this.cmdCodes.push(latestCmdCode);
+        this.index = this.cmdCodes.length;
     },
-    up(currentTCode) {
-        if(this.tCodes.length === 0) return currentTCode;
+    up(currentCmdCode) {
+        if(this.cmdCodes.length === 0) return currentCmdCode;
         this.index--;
         if(this.index < 0) this.index = 0;
-        return this.tCodes[this.index];
+        return this.cmdCodes[this.index];
     },
-    down(currentTCode) {
-        if(this.tCodes.length === 0) return currentTCode;
+    down(currentCmdCode) {
+        if(this.cmdCodes.length === 0) return currentCmdCode;
         this.index++;
-        if(this.index >= this.tCodes.length) {
-            this.index = this.tCodes.length;
+        if(this.index >= this.cmdCodes.length) {
+            this.index = this.cmdCodes.length;
             return '';
         }
-        return this.tCodes[this.index];
+        return this.cmdCodes[this.index];
     },
 };

@@ -83,9 +83,9 @@
       <div class="kk-flex item-class" >
         <div class="form-width" >{{ $t('标签') }}{{ $t('：') }}</div>
         <div class="kk-flex" >
-          <div class="form-width-item1" >{{ $t('终端代码') }}</div>
+          <div class="form-width-item1" >{{ $t('命令代码') }}</div>
           <div class="func-switch" >
-            <el-switch v-model="setInfo.tCode" />
+            <el-switch v-model="setInfo.cmdcode" />
           </div>
         </div>
         <div class="kk-flex" >
@@ -184,7 +184,7 @@ export default {
       fontSize: props.env.fontSize,
       cursorStyle: props.env.cursorStyle,
       cursorBlink: props.env.cursorBlink,
-      tCode: props.env.tCode,
+      cmdcode: props.env.cmdcode,
       cloud: props.env.cloud,
       advance: props.env.advance,
       transport: props.env.transport,
@@ -204,7 +204,7 @@ export default {
         fontSize: props.env.fontSize,
         cursorStyle: props.env.cursorStyle,
         cursorBlink: props.env.cursorBlink,
-        tCode: props.env.tCode,
+        cmdcode: props.env.cmdcode,
         cloud: props.env.cloud,
         advance: props.env.advance,
         transport: props.env.transport,

@@ -4,7 +4,7 @@
         v-model="DialogVisible"
         destroy-on-close
         :width="480"
-        :title="$t('终端代码中心')"
+        :title="$t('命令代码中心')"
         :modal="false"
         modal-class="kk-dialog-class"
         header-class="kk-header-class"
@@ -18,14 +18,14 @@
             <div class="pane-body" >
               <div class="kk-flex" >
                 <div>{{ $t('以') }}&nbsp;</div>
-                <div style="background-color: #f3f4f4;" >F</div>
+                <div class="cmdcode-name" >F</div>
                 <div>&nbsp;{{ $t('开头，用于执行通用功能') }}</div>
               </div>
               <div class="kk-border" ></div>
-              <div v-for="(item, key) in FuncTCode" :key="key" >
-                <div class="kk-flex tcode-item" style="padding: 12px 10px;" >
+              <div v-for="(item, key) in FuncCmdCode" :key="key" >
+                <div class="kk-flex cmdcode-item" style="padding: 12px 10px;" >
                   <div class="kk-flex form-width" >
-                    <div style="background-color: #f3f4f4;" >{{ key }}</div>
+                    <div class="cmdcode-name" >{{ key }}</div>
                     <div style="flex: 1;" ></div>
                   </div>
                   <div class="ellipsis" style="margin-left: 10px; line-height: 18px;" >{{ $t(item.desc) }}</div>
@@ -37,14 +37,14 @@
             <div class="pane-body" >
               <div class="kk-flex" >
                 <div>{{ $t('以') }}&nbsp;</div>
-                <div style="background-color: #f3f4f4;" >S</div>
+                <div class="cmdcode-name" >S</div>
                 <div>&nbsp;{{ $t('开头，用于访问系统模块') }}</div>
               </div>
               <div class="kk-border" ></div>
-              <div v-for="(item, key) in SysTCode" :key="key" >
-                <div class="kk-flex tcode-item" style="padding: 12px 10px;" >
+              <div v-for="(item, key) in SysCmdCode" :key="key" >
+                <div class="kk-flex cmdcode-item" style="padding: 12px 10px;" >
                   <div class="kk-flex form-width" >
-                    <div style="background-color: #f3f4f4;" >{{ key }}</div>
+                    <div class="cmdcode-name" >{{ key }}</div>
                     <div style="flex: 1;" ></div>
                   </div>
                   <div class="ellipsis" style="margin-left: 10px; line-height: 18px;" >{{ $t(item.desc) }}</div>
@@ -54,44 +54,44 @@
           </el-tab-pane>
           <el-tab-pane :label="$t('用户')" >
             <div class="pane-body" >
-              <template v-if="userTCodes && Object.keys(userTCodes).length > 0" >
-                <template v-if="nowTCode && nowTCode.length >= 2 && nowTCode.length <= 6" >
+              <template v-if="userCmdCodes && Object.keys(userCmdCodes).length > 0" >
+                <template v-if="currentCmdCode && currentCmdCode.length >= 2 && currentCmdCode.length <= 6" >
                   <div class="kk-flex" style="margin-bottom: 10px;" >
-                    <el-icon @click="toOverview" style="margin-right: 10px; cursor: pointer; font-size: 16px;" ><ArrowLeft /></el-icon>
-                    <div> {{ modifyTag + nowTCode }} </div>
+                    <el-icon @click="gotoOverview" style="margin-right: 10px; cursor: pointer; font-size: 16px;" ><ArrowLeft /></el-icon>
+                    <div> {{ modifyTag + currentCmdCode }} </div>
                     <div style="margin-left: 10px;" ></div>
-                    <el-tooltip :content="TCodeStatusEnum[userTCodes[nowTCode].status]" placement="top" >
-                      <TCodeStatus :style="{fontSize: '18px', cursor: 'pointer'}" :status="userTCodes[nowTCode].status" ></TCodeStatus>
+                    <el-tooltip :content="CmdCodeStatusEnum[userCmdCodes[currentCmdCode].status]" placement="top" >
+                      <CmdCodeStatus :style="{fontSize: '18px', cursor: 'pointer'}" :status="userCmdCodes[currentCmdCode].status" ></CmdCodeStatus>
                     </el-tooltip>
                     <div style="flex: 1;" ></div>
                     <el-tooltip v-if="!mode" :content="$t('编辑')" placement="top" >
-                      <el-icon @click="doModifyTCode" class="editor-operator" ><Edit /></el-icon>
+                      <el-icon @click="doModifyCmdCode" class="editor-operator" ><Edit /></el-icon>
                     </el-tooltip>
                     <el-tooltip v-if="!mode" :content="$t('删除')" placement="top" >
-                      <el-icon @click="confirmDeleteTCode" class="editor-operator" ><Delete /></el-icon>
+                      <el-icon @click="confirmDeleteCmdCode" class="editor-operator" ><Delete /></el-icon>
                     </el-tooltip>
                     <el-tooltip v-if="mode" :content="$t('只读')" placement="top" >
                       <el-icon @click="doOnlyRead" class="editor-operator" ><View /></el-icon>
                     </el-tooltip>
                     <el-tooltip v-if="mode" :content="$t('保存修改')" placement="top" >
-                      <el-icon @click="doSaveTCode" class="editor-operator" ><Finished /></el-icon>
+                      <el-icon @click="doSaveCmdCode" class="editor-operator" ><Finished /></el-icon>
                     </el-tooltip>
                   </div>
                   <div style="width: 100%; height: 180px;" >
-                    <AceEditor ref="userTCodeEditorRef" @handleChange="handleChange" @handleSave="doSaveTCode" ></AceEditor>
+                    <AceEditor ref="userCmdCodeEditorRef" @handleChange="handleChange" @handleSave="doSaveCmdCode" ></AceEditor>
                   </div>
                 </template>
                 <template v-else >
                   <div class="kk-flex" >
                     <div>{{ $t('以') }}&nbsp;</div>
-                    <div style="background-color: #f3f4f4;" >U</div>
+                    <div class="cmdcode-name" >U</div>
                     <div>&nbsp;{{ $t('开头，用于自定义工作流') }}</div>
                   </div>
                   <div class="kk-border" ></div>
-                  <div v-for="(item, key) in userTCodes" :key="key" >
-                    <div class="kk-flex tcode-item" style="padding: 12px 10px;" >
+                  <div v-for="(item, key) in userCmdCodes" :key="key" >
+                    <div class="kk-flex cmdcode-item" style="padding: 12px 10px;" >
                       <div class="kk-flex form-width" >
-                        <div style="background-color: #f3f4f4;" >{{ key }}</div>
+                        <div class="cmdcode-name" >{{ key }}</div>
                         <div style="flex: 1;" ></div>
                       </div>
                       <ToolTip :content="item.desc" :delay="1000" >
@@ -101,10 +101,10 @@
                       </ToolTip>
                       <div style="flex: 1;" ></div>
                       <div style="margin-left: 10px;" ></div>
-                      <el-tooltip :content="TCodeStatusEnum[item.status]" placement="top" >
-                        <TCodeStatus :style="{fontSize: '18px', cursor: 'pointer'}" :status="item.status" ></TCodeStatus>
+                      <el-tooltip :content="CmdCodeStatusEnum[item.status]" placement="top" >
+                        <CmdCodeStatus :style="{fontSize: '18px', cursor: 'pointer'}" :status="item.status" ></CmdCodeStatus>
                       </el-tooltip>
-                      <el-icon @click="toWorkflow(key)" style="margin-left: 15px; cursor: pointer; font-size: 16px;" ><ArrowRight /></el-icon>
+                      <el-icon @click="gotoWorkflow(key)" style="margin-left: 15px; cursor: pointer; font-size: 16px;" ><ArrowRight /></el-icon>
                     </div>
                   </div>
                 </template>
@@ -112,7 +112,7 @@
               <template v-else >
                 <div class="kk-flex" >
                   <div>{{ $t('以') }}&nbsp;</div>
-                  <div style="background-color: #f3f4f4;" >U</div>
+                  <div class="cmdcode-name" >U</div>
                   <div>&nbsp;{{ $t('开头，用于自定义工作流') }}</div>
                 </div>
                 <div class="kk-border" ></div>
@@ -133,24 +133,24 @@
 <script>
 import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
-import { FuncTCode, SysTCode, TCodeStatusEnum } from "@/components/tcode/TCode";
+import { FuncCmdCode, SysCmdCode, CmdCodeStatusEnum } from "@/components/cmdcode/CmdCode";
 import ToolTip from "@/components/common/ToolTip";
 import NoData from '@/components/common/NoData';
 import { ArrowRight, ArrowLeft, Edit, View, Finished, Delete } from '@element-plus/icons-vue';
 import AceEditor from '@/components/common/AceEditor';
 import { aesDecrypt } from '@/utils/Encrypt';
-import TCodeStatus from './TCodeStatus';
+import CmdCodeStatus from './CmdCodeStatus.vue';
 import { deleteDialog } from '@/components/common/DeleteDialog';
 import i18n from "@/locales/i18n";
 import { localStore } from "@/env/Store";
-import { localStoreUtil } from "@/utils/CloudUtil";
+import { localStoreUtil } from "@/utils/Cloud";
 
 export default {
-  name: 'TCodeCenter',
+  name: 'CmdCodeCenter',
   components: {
     ToolTip,
     NoData,
-    TCodeStatus,
+    CmdCodeStatus,
     AceEditor,
     ArrowRight,
     ArrowLeft,
@@ -165,48 +165,48 @@ export default {
     const DialogVisible = ref(false);
     const modifyTag = ref('');
 
-    const userTCodes = ref({});
-    const nowTCode = ref('');
+    const userCmdCodes = ref({});
+    const currentCmdCode = ref('');
     const mode = ref(false);
     // 查看工作流
-    const toWorkflow = (tcode) => {
-      nowTCode.value = tcode;
+    const gotoWorkflow = (cmdcode) => {
+      currentCmdCode.value = cmdcode;
       mode.value = false;
       setTimeout(() => {
-        initTCodeEditor(true);
+        initCmdCodeEditor(true);
       }, 1);
     };
     // 返回
-    const toOverview = () => {
+    const gotoOverview = () => {
       mode.value = false;
-      nowTCode.value = '';
+      currentCmdCode.value = '';
       modifyTag.value = '';
     };
 
     // 编辑器(只读)
-    const userTCodeEditorRef = ref();
-    const initTCodeEditor = (mode) => {
-      userTCodeEditorRef.value.setLanguage('kk.js');
-      userTCodeEditorRef.value.setValue(JSON.parse(aesDecrypt(localStoreUtil.getItem(localStore['tcodes'])))[nowTCode.value].workflow || '');
-      userTCodeEditorRef.value.setReadOnly(mode);
+    const userCmdCodeEditorRef = ref();
+    const initCmdCodeEditor = (mode) => {
+      userCmdCodeEditorRef.value.setLanguage('kk.js');
+      userCmdCodeEditorRef.value.setValue(JSON.parse(aesDecrypt(localStoreUtil.getItem(localStore['cmdcodes'])))[currentCmdCode.value].workflow || '');
+      userCmdCodeEditorRef.value.setReadOnly(mode);
       modifyTag.value = '';
     };
 
     // 启用编辑
-    const doModifyTCode = () => {
+    const doModifyCmdCode = () => {
       mode.value = true;
-      initTCodeEditor(false);
+      initCmdCodeEditor(false);
     };
     // 只读模式
     const doOnlyRead = () => {
       mode.value = false;
-      initTCodeEditor(true);
+      initCmdCodeEditor(true);
     };
 
-    // 修改终端代码工作流
-    const doSaveTCode = () => {
+    // 修改命令代码工作流
+    const doSaveCmdCode = () => {
       if(modifyTag.value !== '*') return;
-      context.emit('handleSaveTCode', nowTCode.value, userTCodeEditorRef.value.getValue());
+      context.emit('handleSaveCmdCode', currentCmdCode.value, userCmdCodeEditorRef.value.getValue());
       doOnlyRead();
       ElMessage({
         message: i18n.global.t('修改成功'),
@@ -216,18 +216,18 @@ export default {
       modifyTag.value = '';
     };
 
-    // 删除终端代码
-    const confirmDeleteTCode = () => {
-      deleteDialog(i18n.global.t('提示'), i18n.global.t('确定删除此终端代码吗？'), doDeleteTCode);
+    // 删除命令代码
+    const confirmDeleteCmdCode = () => {
+      deleteDialog(i18n.global.t('提示'), i18n.global.t('确定删除此命令代码吗？'), doDeleteCmdCode);
     };
-    const doDeleteTCode = () => {
-      context.emit('handleDeleteTCode', nowTCode.value);
+    const doDeleteCmdCode = () => {
+      context.emit('handleDeleteCmdCode', currentCmdCode.value);
       ElMessage({
         message: i18n.global.t('删除成功'),
         type: 'success',
         grouping: true,
       });
-      toOverview();
+      gotoOverview();
     };
 
     const handleChange = () => {
@@ -236,9 +236,9 @@ export default {
 
     // 重置
     const reset = () => {
-      if(userTCodeEditorRef.value) userTCodeEditorRef.value.reset();
+      if(userCmdCodeEditorRef.value) userCmdCodeEditorRef.value.reset();
       mode.value = false;
-      nowTCode.value = '';
+      currentCmdCode.value = '';
       modifyTag.value = '';
       DialogVisible.value = false;
     };
@@ -254,21 +254,21 @@ export default {
 
     return {
       DialogVisible,
-      FuncTCode,
-      SysTCode,
-      TCodeStatusEnum,
-      nowTCode,
-      toWorkflow,
-      toOverview,
-      userTCodes,
-      userTCodeEditorRef,
-      initTCodeEditor,
+      FuncCmdCode,
+      SysCmdCode,
+      CmdCodeStatusEnum,
+      currentCmdCode,
+      gotoWorkflow,
+      gotoOverview,
+      userCmdCodes,
+      userCmdCodeEditorRef,
+      initCmdCodeEditor,
       mode,
-      doModifyTCode,
+      doModifyCmdCode,
       doOnlyRead,
-      doSaveTCode,
-      confirmDeleteTCode,
-      doDeleteTCode,
+      doSaveCmdCode,
+      confirmDeleteCmdCode,
+      doDeleteCmdCode,
       handleChange,
       modifyTag,
       reset,
@@ -291,8 +291,13 @@ export default {
   border-bottom: 1px solid #ddd;
 }
 
-.tcode-item:hover {
+.cmdcode-item:hover {
   background-color: #efefef;
+}
+
+.cmdcode-name {
+  background-color: #f3f4f4;
+  user-select: text;
 }
 
 .editor-operator {

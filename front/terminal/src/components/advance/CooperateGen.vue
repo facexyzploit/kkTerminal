@@ -45,10 +45,10 @@
 import { ref,computed } from 'vue';
 import useClipboard from "vue-clipboard3";
 import { ElMessage } from 'element-plus';
-import { http_base_url } from '@/env/BaseUrl';
+import { http_base_url } from '@/env/Base';
 import i18n from "@/locales/i18n";
-import { request } from "@/utils/RequestUtil";
-import { getPureUrl } from "@/utils/UrlUtil";
+import { request } from "@/utils/Request";
+import { getPureUrl } from "@/utils/Url";
 
 export default {
   name: 'CooperateGen',

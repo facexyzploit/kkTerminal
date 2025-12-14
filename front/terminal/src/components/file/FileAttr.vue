@@ -105,15 +105,15 @@
 
 <script>
 import { ref, computed, watch } from 'vue';
-import { request } from "@/utils/RequestUtil";
-import { http_base_url } from '@/env/BaseUrl';
+import { request } from "@/utils/Request";
+import { http_base_url } from '@/env/Base';
 import { calcDate } from '@/components/calc/CalcDate';
 import { calcPriority } from '@/components/calc/CalcPriority';
 import { ElMessage } from 'element-plus';
 import useClipboard from "vue-clipboard3";
 import { DocumentCopy, Refresh, Edit } from '@element-plus/icons-vue';
 import { calcSize } from '@/components/calc/CalcSize';
-import { escapeItem, escapePath } from '@/utils/StringUtil';
+import { escapeItem, escapePath } from '@/utils/String';
 import ToolTip from '@/components/common/ToolTip';
 import PermissionsEdit from './PermissionsEdit';
 import i18n from "@/locales/i18n";

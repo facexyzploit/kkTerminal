@@ -182,32 +182,32 @@
             </el-card>
           </template>
         </el-dropdown>
-        <div v-if="env.tCode" class="kk-flex" style="margin-right: 10px;" >
+        <div v-if="env.cmdcode" class="kk-flex" style="margin-right: 10px;" >
           <div style="margin-right: 3px;" >
             <el-input
-              v-model="tcode"
-              :style="{ width: '100px', height: '20px', fontSize: '12px'}"
-              @keydown="handleTCode"
+              v-model="cmdcode"
+              :style="{ width: '110px', height: '20px', fontSize: '12px'}"
+              @keydown="handleCmdCode"
               maxlength="6"
-              :placeholder="$t('终端代码')"
+              :placeholder="$t('命令代码')"
             >
             </el-input>
           </div>
-          <el-popover v-if="env.tCode" placement="bottom-end" :width="$t('232')" trigger="click" >
+          <el-popover v-if="env.cmdcode" placement="bottom-end" :width="$t('242')" trigger="click" >
             <template #reference>
               <el-icon :style="{ color: '#606266', cursor: 'pointer' }" ><QuestionFilled /></el-icon>
             </template>
-            <div v-if="env.tCode" class="no-select" style="font-size: 12px; color: #313131;" >
-              <div style="font-size: 16px; font-weight: bold;" >{{ $t('什么是终端代码？') }}</div>
-              <div style="margin-top: 5px;" >{{ $t('终端代码是用于访问和执行特定操作流程的快捷方式') }}</div>
+            <div v-if="env.cmdcode" class="no-select" style="font-size: 12px; color: #313131;" >
+              <div style="font-size: 16px; font-weight: bold;" >{{ $t('什么是命令代码？') }}</div>
+              <div style="margin-top: 5px;" >{{ $t('命令代码是用于访问和执行特定操作流程的快捷方式') }}</div>
               <div class="kk-flex" style="margin-top: 5px;" >
                 <div>{{ $t('输入') }}&nbsp;</div>
-                <div style="background-color: #f3f4f4; user-select: text;" >STC</div>
+                <div class="cmdcode-name" >SCCC</div>
                 <div>&nbsp;{{ $t('并按下回车以查看更多信息') }}</div>
               </div>
               <div class="kk-flex" style="margin-top: 5px;" >
                 <div>{{ $t('输入') }}&nbsp;</div>
-                <div style="background-color: #f3f4f4; user-select: text;" >STW</div>
+                <div class="cmdcode-name" >SCCW</div>
                 <div>&nbsp;{{ $t('并按下回车以自定义工作流') }}</div>
               </div>
             </div>
@@ -228,10 +228,10 @@
   <PreferenceSetting ref="preferenceSettingRef" :env="env" @callback="saveEnv" :os="osInfo.clientOS" ></PreferenceSetting>
   <!-- 文件管理 -->
   <FileBlock ref="fileBlockRef" :sshKey="sshKey" :os="osInfo.clientOS" @updateTransportLists="updateTransportLists" :uploadingList="uploadingList" ></FileBlock>
-  <!-- 终端代码工作流 -->
-  <TCodeWorkflow ref="tCodeWorkflowRef" @importTCodes="importTCodes" @exportTCodes="exportTCodes" ></TCodeWorkflow>
-  <!-- 终端代码中心 -->
-  <TCodeCenter ref="tCodeCenterRef" :userTCodes="tcodes" @handleSaveTCode="handleSaveTCode" @handleDeleteTCode="handleDeleteTCode" ></TCodeCenter>
+  <!-- 命令代码工作流 -->
+  <CmdCodeWorkflow ref="cmdCodeWorkflowRef" @importCmdCodes="importCmdCodes" @exportCmdCodes="exportCmdCodes" ></CmdCodeWorkflow>
+  <!-- 命令代码中心 -->
+  <CmdCodeCenter ref="cmdCodeCenterRef" :userCmdCodes="cmdcodes" @handleSaveCmdCode="handleSaveCmdCode" @handleDeleteCmdCode="handleDeleteCmdCode" ></CmdCodeCenter>
   <!-- 协作 -->
   <CooperateGen ref="cooperateGenRef" :sshKey="sshKey" :advance="env.advance" @handleCooperate="handleCooperate" ></CooperateGen>
   <!-- 监控 -->
@@ -252,21 +252,20 @@ import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import "xterm/css/xterm.css";
 
-import { request } from "@/utils/RequestUtil";
+import { request } from "@/utils/Request";
 import { default_env } from '@/env/Env';
-import { ws_base_url } from '@/env/BaseUrl';
-import { changeStr, changeBase64Str, changeStrBase64, generateRandomString } from '@/utils/StringUtil';
-import { http_base_url } from '@/env/BaseUrl';
+import { http_base_url, ws_base_url } from '@/env/Base';
+import { changeStr, changeBase64Str, changeStrBase64, generateRandomString } from '@/utils/String';
 
 import ConnectSetting from '@/components/connect/ConnectSetting';
 import PreferenceSetting from '@/components/preference/PreferenceSetting';
 import FileBlock from "@/components/file/FileBlock";
-import TCodeWorkflow from '@/components/tcode/TCodeWorkflow';
-import TCodeCenter from "@/components/tcode/TCodeCenter";
+import CmdCodeWorkflow from '@/components/cmdcode/CmdCodeWorkflow.vue';
+import CmdCodeCenter from "@/components/cmdcode/CmdCodeCenter.vue";
 import CooperateGen from '@/components/advance/CooperateGen';
 import StatusMonitor from '@/components/advance/StatusMonitor'
 import DockerBlock from "@/components/advance/docker/DockerBlock";
-import { getUrlParams, getPureUrl, doUrlDownload } from '@/utils/UrlUtil';
+import { getUrlParams, getPureUrl, doUrlDownload } from '@/utils/Url';
 import {
   QuestionFilled,
   VideoPlay,
@@ -278,25 +277,26 @@ import {
   CircleClose,
 } from '@element-plus/icons-vue';
 import {
-  FuncTCode,
-  SysTCode,
-  UserTCodeExecutor,
-  UserTCodeHelper,
-  TCodeReservedVarsSetter,
-  historyTCode,
-} from "@/components/tcode/TCode";
+  FuncCmdCode,
+  SysCmdCode,
+  UserCmdCodeExecutor,
+  UserCmdCodeHelper,
+  CmdCodeReservedVarsSetter,
+  historyCmdCode,
+} from "@/components/cmdcode/CmdCode";
 
 import i18n from "@/locales/i18n";
-import { cloudUpload, cloudDownload, syncUpload, syncDownload, localStoreUtil } from "@/utils/CloudUtil";
+import { cloudUpload, cloudDownload, syncUpload, syncDownload, localStoreUtil } from "@/utils/Cloud";
 import { deleteDialog } from "@/components/common/DeleteDialog";
 import { calcType } from "@/components/calc/CalcType";
 import { calcSize } from "@/components/calc/CalcSize";
 import { calcBgColor } from "@/components/calc/CalcColor";
-import { getChannel, messageDict } from "@/utils/ChannelUtil";
+import { getChannel, messageDict } from "@/utils/Channel";
 import { localStore } from "@/env/Store";
 import NoData from "@/components/common/NoData";
 import ToolTip from "@/components/common/ToolTip";
 import FileIcons from "file-icons-vue";
+import setupCompatFixes from "@/utils/Compatibility";
 
 export default {
   name: 'TerminalView',
@@ -308,8 +308,8 @@ export default {
     ConnectSetting,
     PreferenceSetting,
     FileBlock,
-    TCodeWorkflow,
-    TCodeCenter,
+    CmdCodeWorkflow,
+    CmdCodeCenter,
     CooperateGen,
     StatusMonitor,
     QuestionFilled,
@@ -324,6 +324,9 @@ export default {
   props: ['osInfo'],
   setup(props) {
 
+    // 兼容性修复
+    setupCompatFixes();
+
     // 浏览器窗口广播
     const channel = getChannel();
     channel.postMessage(JSON.stringify({
@@ -332,14 +335,14 @@ export default {
     }));
 
     // 连接状态
-    const connect_status = ref({
+    const connectStatusMap = ref({
       'Fail': 'Fail to connect remote server !\r\n',
       'Success': 'Connecting success !\r\n',
       'Connecting': 'Connecting to remote server ...\r\n',
       'Disconnected': 'Disconnect to remote server.\r\n',
       'End': 'This Cooperation is Ended.\r\n',
     });
-    const now_connect_status = ref(connect_status.value['Connecting']);
+    const currentConnectStatus = ref(connectStatusMap.value['Connecting']);
 
     // 获取当前组件实例
     const instance = getCurrentInstance();
@@ -417,17 +420,17 @@ export default {
       else options.value = {};
     };
     loadOps();
-    const tcodes = ref({});
-    const loadTCodes = () => {
-      tcodes.value = {};
-      if(localStoreUtil.getItem(localStore['tcodes'])) {
-        tcodes.value = JSON.parse(aesDecrypt(localStoreUtil.getItem(localStore['tcodes'])));
+    const cmdcodes = ref({});
+    const loadCmdCodes = () => {
+      cmdcodes.value = {};
+      if(localStoreUtil.getItem(localStore['cmdcodes'])) {
+        cmdcodes.value = JSON.parse(aesDecrypt(localStoreUtil.getItem(localStore['cmdcodes'])));
       }
       setTimeout(() => {
-        tCodeCenterRef.value.userTCodes = {...tcodes.value};
+        cmdCodeCenterRef.value.userCmdCodes = {...cmdcodes.value};
       }, 1);
     };
-    loadTCodes();
+    loadCmdCodes();
     const env = ref(default_env);
     const urlParams = ref(getUrlParams());
     const loadEnv = () => {
@@ -437,11 +440,11 @@ export default {
       // # bg fg
       if(urlParams.value.bg && urlParams.value.bg[0] !== '#') urlParams.value.bg = '#' + urlParams.value.bg;
       if(urlParams.value.fg && urlParams.value.fg[0] !== '#') urlParams.value.fg = '#' + urlParams.value.fg;
-      // true/false cursorBlink tCode cloud advance transport
+      // true/false cursorBlink cmdcode cloud advance transport
       if(urlParams.value.cursorBlink === 'true') urlParams.value.cursorBlink = true;
       else if(urlParams.value.cursorBlink === 'false') urlParams.value.cursorBlink = false;
-      if(urlParams.value.tCode === 'true') urlParams.value.tCode = true;
-      else if(urlParams.value.tCode === 'false') urlParams.value.tCode = false;
+      if(urlParams.value.cmdcode === 'true') urlParams.value.cmdcode = true;
+      else if(urlParams.value.cmdcode === 'false') urlParams.value.cmdcode = false;
       if(urlParams.value.cloud === 'true') urlParams.value.cloud = true;
       else if(urlParams.value.cloud === 'false') urlParams.value.cloud = false;
       if(urlParams.value.advance === 'true') urlParams.value.advance = true;
@@ -453,14 +456,14 @@ export default {
         if(key in env.value && key.lastIndexOf('_') === -1) env.value[key] = urlParams.value[key];
       }
       // option
-      const nowOpInfo = options.value[env.value['option']];
-      if(nowOpInfo) env.value = {...env.value,...nowOpInfo};
+      const currentOpInfo = options.value[env.value['option']];
+      if(currentOpInfo) env.value = {...env.value, ...currentOpInfo};
       else env.value.option = '';
       urlParams.value.option = env.value.option;
       // record
       if(urlParams.value.record) {
         if(urlParams.value.mode !== 'headless' && urlParams.value.mode !== 'pure') urlParams.value.mode = 'pure';
-        now_connect_status.value = '';
+        currentConnectStatus.value = '';
       }
       else urlParams.value.record = '';
       // cooperate
@@ -472,7 +475,7 @@ export default {
       if(!env.value.lang) env.value.lang = 'en';
       i18n.global.locale = env.value.lang;
       // 预留值
-      TCodeReservedVarsSetter('option', env.value.option);
+      CmdCodeReservedVarsSetter('option', env.value.option);
     };
     loadEnv();
 
@@ -521,10 +524,10 @@ export default {
       fitAddon.fit();
       // 修改虚拟终端行列大小
       if(socket.value && socket.value.readyState === WebSocket.OPEN && term) {
-        const new_rows = fitAddon.proposeDimensions().rows;
-        const new_cols = fitAddon.proposeDimensions().cols;
-        socket.value.send(aesEncrypt(JSON.stringify({type: 1, content: "", rows: new_rows, cols: new_cols}), secretKey.value));
-        term.resize(new_cols,new_rows);
+        const newRows = fitAddon.proposeDimensions().rows;
+        const newCols = fitAddon.proposeDimensions().cols;
+        socket.value.send(aesEncrypt(JSON.stringify({type: 1, content: "", rows: newRows, cols: newCols}), secretKey.value));
+        term.resize(newCols, newRows);
       }
     };
     // 终端写入
@@ -595,14 +598,14 @@ export default {
         // 协作失败
         if(result.code === -2) {
           term.clear();
-          now_connect_status.value = connect_status.value['Fail'];
+          currentConnectStatus.value = connectStatusMap.value['Fail'];
           termWrite(result.info + ".\n");
         }
         // 连接失败
         else if(result.code === -1) {
           term.clear();
-          now_connect_status.value = connect_status.value['Fail'];
-          termWrite(now_connect_status.value);
+          currentConnectStatus.value = connectStatusMap.value['Fail'];
+          termWrite(currentConnectStatus.value);
           setTimeout(() => {
             doSettings(1);
           }, 400);
@@ -610,7 +613,7 @@ export default {
         // 连接成功
         else if(result.code === 0) {
           term.clear();
-          now_connect_status.value = connect_status.value['Success'];
+          currentConnectStatus.value = connectStatusMap.value['Success'];
           setTimeout(() => {
             termFit();
           }, 1);
@@ -623,11 +626,11 @@ export default {
           if(urlParams.value.cmd) {
             // bash命令
             if(urlParams.value.cmd.toLowerCase().startsWith('bash:')) sendMessage(urlParams.value.cmd.substring(5) + "\n");
-            // 终端代码命令
-            else if(urlParams.value.cmd.toLowerCase().startsWith('tcode:')) {
+            // 命令代码命令
+            else if(urlParams.value.cmd.toLowerCase().startsWith('code:')) {
               setTimeout(() => {
-                tcode.value = urlParams.value.cmd.substring(6);
-                handleTCode({key: 'Enter'});
+                cmdcode.value = urlParams.value.cmd.substring(5);
+                handleCmdCode({key: 'Enter'});
               }, 400);
             }
           }
@@ -637,14 +640,14 @@ export default {
         // 输出
         else if(result.code === 1) {
           const output = aesDecrypt(result.data, secretKey.value);
-          if(UserTCodeHelper.active) UserTCodeHelper.outArray.push(output);
+          if(UserCmdCodeHelper.active) UserCmdCodeHelper.outArray.push(output);
           if(recording.value) {
             recordInfo.value.push({
               time: new Date().getTime(),
               content: output,
             });
           }
-          if(!(UserTCodeHelper.active && !UserTCodeHelper.display)) termWrite(output);
+          if(!(UserCmdCodeHelper.active && !UserCmdCodeHelper.display)) termWrite(output);
         }
         // 更新协作者数量
         else if(result.code === 2) {
@@ -670,18 +673,18 @@ export default {
       };
       // 断开连接
       socket.value.onclose = (e) => {
-        if(now_connect_status.value === connect_status.value['Success'] && e.code !== 3333) {
+        if(currentConnectStatus.value === connectStatusMap.value['Success'] && e.code !== 3333) {
           sshKey.value = '';
           if(urlParams.value.cooperate) {
-            now_connect_status.value = connect_status.value['End'];
-            termWrite("\r\n" + now_connect_status.value);
+            currentConnectStatus.value = connectStatusMap.value['End'];
+            termWrite("\r\n" + currentConnectStatus.value);
             return;
           }
           closeBlock();
-          now_connect_status.value = connect_status.value['Disconnected'];
-          termWrite("\r\n" + now_connect_status.value);
+          currentConnectStatus.value = connectStatusMap.value['Disconnected'];
+          termWrite("\r\n" + currentConnectStatus.value);
         }
-        UserTCodeHelper.reset();
+        UserCmdCodeHelper.reset();
       };
     };
 
@@ -709,10 +712,10 @@ export default {
     const statusMonitorRef = ref();
     const dockerBlockRef = ref();
     // 保存更改的环境变量
-    const saveEnv = (new_env,restart=true) => {
+    const saveEnv = (new_env, restart=true) => {
       let save_env = default_env;
-      if(localStoreUtil.getItem(localStore['env'])) save_env = {...save_env,...JSON.parse(aesDecrypt(localStoreUtil.getItem(localStore['env'])))};
-      save_env = {...save_env,...new_env};
+      if(localStoreUtil.getItem(localStore['env'])) save_env = {...save_env, ...JSON.parse(aesDecrypt(localStoreUtil.getItem(localStore['env'])))};
+      save_env = {...save_env, ...new_env};
       localStoreUtil.setItem(localStore['env'], aesEncrypt(JSON.stringify(save_env)));
       for (const key in new_env) {
         if(key in urlParams.value) urlParams.value[key] = new_env[key];
@@ -728,13 +731,13 @@ export default {
           termFit();
           isFirst.value = false;
         }
-        // 禁止在执行终端代码工作流的过程中进行人为输入
-        if(UserTCodeHelper.active === active) {
+        // 禁止在执行命令代码工作流的过程中进行人为输入
+        if(UserCmdCodeHelper.active === active) {
           socket.value.send(aesEncrypt(JSON.stringify({type: 0, content: text, rows: 0, cols: 0}), secretKey.value));
         }
         else {
           ElMessage({
-            message: i18n.global.t('终端代码') + ' ' + UserTCodeHelper.name + ' ' + i18n.global.t('正在执行'),
+            message: i18n.global.t('命令代码') + ' ' + UserCmdCodeHelper.name + ' ' + i18n.global.t('正在执行'),
             type: 'warning',
             grouping: true,
             repeatNum: Number.MIN_SAFE_INTEGER,
@@ -800,7 +803,7 @@ export default {
       // 左键单击
       terminal.value.addEventListener('click', doClick);
 
-      termWrite(now_connect_status.value);
+      termWrite(currentConnectStatus.value);
     };
 
     // 终端设置
@@ -818,7 +821,7 @@ export default {
       // 重启
       else if (type === 3) {
         showSettings(false);
-        now_connect_status.value = connect_status.value['Connecting'];
+        currentConnectStatus.value = connectStatusMap.value['Connecting'];
         sshKey.value = '';
         if(socket.value) socket.value.close(3333);  // 主动释放资源，必需
         // 进行重启
@@ -904,145 +907,145 @@ export default {
       resetTransportLists();
     };
 
-    const setTCodeStatus = (transTCode, state) => {
-      tcodes.value[transTCode].status = state;
-      localStoreUtil.setItem(localStore['tcodes'], aesEncrypt(JSON.stringify(tcodes.value)));
+    const setCmdCodeStatus = (transCmdCode, state) => {
+      cmdcodes.value[transCmdCode].status = state;
+      localStoreUtil.setItem(localStore['cmdcodes'], aesEncrypt(JSON.stringify(cmdcodes.value)));
       setTimeout(() => {
-        tCodeCenterRef.value.userTCodes = {...tcodes.value};
+        cmdCodeCenterRef.value.userCmdCodes = {...cmdcodes.value};
       }, 1);
     };
 
-    // 处理终端代码
-    const tcode = ref('');
-    const handleTCode = async (event) => {
-      // 历史终端代码
+    // 处理命令代码
+    const cmdcode = ref('');
+    const handleCmdCode = async (event) => {
+      // 历史命令代码
       if(event.key === 'ArrowUp' || event.key === 'ArrowDown') {
         event.preventDefault();
         event.stopPropagation();
-        if(event.key === 'ArrowUp') tcode.value = historyTCode.up(tcode.value);
-        else tcode.value = historyTCode.down(tcode.value);
+        if(event.key === 'ArrowUp') cmdcode.value = historyCmdCode.up(cmdcode.value);
+        else cmdcode.value = historyCmdCode.down(cmdcode.value);
         return;
       }
       if(event.key !== 'Enter') return;
-      if(!tcode.value || tcode.value.length < 2) return;
-      const transTCode = tcode.value.toUpperCase();
-      tcode.value = '';
-      historyTCode.add(transTCode);
-      // 执行终端代码工作流
-      // 功能终端代码
-      if(transTCode[0] === 'F' && FuncTCode[transTCode]) FuncTCode[transTCode].execFlow(instance);
-      // 系统终端代码
-      else if(transTCode[0] === 'S' && SysTCode[transTCode]) SysTCode[transTCode].execFlow(instance);
-      // 用户终端代码
-      else if(transTCode[0] === 'U' && tcodes.value[transTCode]) {
-        if(!UserTCodeHelper.writeNoAwait) UserTCodeHelper.writeNoAwait = sendMessage;
-        if(!UserTCodeHelper.fileBlockRef) UserTCodeHelper.fileBlockRef = fileBlockRef.value;
-        // 当前未执行任何终端代码工作流
-        if(!UserTCodeHelper.active) {
-          UserTCodeHelper.reset();
-          UserTCodeHelper.name = transTCode;
-          UserTCodeHelper.active = true;
+      if(!cmdcode.value || cmdcode.value.length < 2) return;
+      const transCmdCode = cmdcode.value.toUpperCase();
+      cmdcode.value = '';
+      historyCmdCode.add(transCmdCode);
+      // 执行命令代码工作流
+      // 功能命令代码
+      if(transCmdCode[0] === 'F' && FuncCmdCode[transCmdCode]) FuncCmdCode[transCmdCode].execFlow(instance);
+      // 系统命令代码
+      else if(transCmdCode[0] === 'S' && SysCmdCode[transCmdCode]) SysCmdCode[transCmdCode].execFlow(instance);
+      // 用户命令代码
+      else if(transCmdCode[0] === 'U' && cmdcodes.value[transCmdCode]) {
+        if(!UserCmdCodeHelper.writeNoAwait) UserCmdCodeHelper.writeNoAwait = sendMessage;
+        if(!UserCmdCodeHelper.fileBlockRef) UserCmdCodeHelper.fileBlockRef = fileBlockRef.value;
+        // 当前未执行任何命令代码工作流
+        if(!UserCmdCodeHelper.active) {
+          UserCmdCodeHelper.reset();
+          UserCmdCodeHelper.name = transCmdCode;
+          UserCmdCodeHelper.active = true;
           // 编译: 工作流 => 执行流
-          if(!tcodes.value[transTCode].execFlow || !(tcodes.value[transTCode].execFlow instanceof Function)) {
-            const textFlow = tcodes.value[transTCode].workflow.toString();
+          if(!cmdcodes.value[transCmdCode].execFlow || !(cmdcodes.value[transCmdCode].execFlow instanceof Function)) {
+            const textFlow = cmdcodes.value[transCmdCode].workflow.toString();
             try {
-              tcodes.value[transTCode].execFlow = new Function('kkTerminal', `return (async () => { ${textFlow} })()`);
+              cmdcodes.value[transCmdCode].execFlow = new Function('kkTerminal', `return (async () => { ${textFlow} })()`);
             } catch (error) {
-              setTCodeStatus(transTCode, 'Compile Error');
+              setCmdCodeStatus(transCmdCode, 'Compile Error');
               ElMessage({
-                message: i18n.global.t('终端代码') + ' ' + transTCode + ' ' + i18n.global.t('编译错误：') + error,
+                message: i18n.global.t('命令代码') + ' ' + transCmdCode + ' ' + i18n.global.t('编译错误：') + error,
                 type: 'error',
                 grouping: true,
               });
-              UserTCodeHelper.reset();
+              UserCmdCodeHelper.reset();
               return;
             }
           }
-          // 执行终端代码工作流
+          // 执行命令代码工作流
           try {
             ElMessage({
-              message: i18n.global.t('终端代码') + ' ' + transTCode + ' ' + i18n.global.t('工作流开始'),
+              message: i18n.global.t('命令代码') + ' ' + transCmdCode + ' ' + i18n.global.t('工作流开始'),
               type: 'success',
               grouping: true,
             });
-            await tcodes.value[transTCode].execFlow(UserTCodeExecutor);
+            await cmdcodes.value[transCmdCode].execFlow(UserCmdCodeExecutor);
             ElMessage({
-              message: i18n.global.t('终端代码') + ' ' + transTCode + ' ' + i18n.global.t('工作流结束'),
+              message: i18n.global.t('命令代码') + ' ' + transCmdCode + ' ' + i18n.global.t('工作流结束'),
               type: 'success',
               grouping: true,
             });
-            setTCodeStatus(transTCode, 'Execute Success');
+            setCmdCodeStatus(transCmdCode, 'Execute Success');
           } catch(error) {
             ElMessage({
-              message: i18n.global.t('终端代码') + ' ' + transTCode + ' ' + i18n.global.t('执行中断：') + error,
+              message: i18n.global.t('命令代码') + ' ' + transCmdCode + ' ' + i18n.global.t('执行中断：') + error,
               type: 'warning',
               grouping: true,
             });
-            setTCodeStatus(transTCode, 'Execute Interrupt');
+            setCmdCodeStatus(transCmdCode, 'Execute Interrupt');
           } finally {
-            UserTCodeHelper.reset();
+            UserCmdCodeHelper.reset();
           }
         }
         else {
           ElMessage({
-            message: i18n.global.t('终端代码') + ' ' + UserTCodeHelper.name + ' ' + i18n.global.t('正在执行'),
+            message: i18n.global.t('命令代码') + ' ' + UserCmdCodeHelper.name + ' ' + i18n.global.t('正在执行'),
             type: 'warning',
             grouping: true,
             repeatNum: Number.MIN_SAFE_INTEGER,
           });
         }
       }
-      // 错误终端代码
+      // 错误命令代码
       else {
-        if(transTCode[0] === 'F' || transTCode[0] === 'S' || transTCode[0] === 'U') {
+        if(transCmdCode[0] === 'F' || transCmdCode[0] === 'S' || transCmdCode[0] === 'U') {
           ElMessage({
-            message: i18n.global.t('终端代码') + ' ' + transTCode + ' ' + i18n.global.t('不存在'),
+            message: i18n.global.t('命令代码') + ' ' + transCmdCode + ' ' + i18n.global.t('不存在'),
             type: 'warning',
             grouping: true,
           });
         }
         else {
           ElMessage({
-            message: i18n.global.t('终端代码必须以F，S，U开头'),
+            message: i18n.global.t('命令代码必须以F，S，U开头'),
             type: 'warning',
             grouping: true,
           });
         }
       }
     };
-    const tCodeWorkflowRef = ref();
-    // 批量导入TCode
-    const importTCodes = (data) => {
-      const tCodeData = {...tcodes.value,...data};
-      localStoreUtil.setItem(localStore['tcodes'], aesEncrypt(JSON.stringify(tCodeData)));
-      loadTCodes();
+    const cmdCodeWorkflowRef = ref();
+    // 批量导入CmdCode
+    const importCmdCodes = (data) => {
+      const cmdCodeData = {...cmdcodes.value, ...data};
+      localStoreUtil.setItem(localStore['cmdcodes'], aesEncrypt(JSON.stringify(cmdCodeData)));
+      loadCmdCodes();
     };
-    // 批量导出终端代码
-    const exportTCodes = () => {
+    // 批量导出命令代码
+    const exportCmdCodes = () => {
       let content = {};
-      if(localStoreUtil.getItem(localStore['tcodes'])) content = JSON.parse(aesDecrypt(localStoreUtil.getItem(localStore['tcodes'])));
+      if(localStoreUtil.getItem(localStore['cmdcodes'])) content = JSON.parse(aesDecrypt(localStoreUtil.getItem(localStore['cmdcodes'])));
       // 创建 Blob 对象
       const blob = new Blob([JSON.stringify(content, null, 4)], { type: 'text/plain' });
       // 创建指向 Blob 的 URL
       const url = URL.createObjectURL(blob);
-      doUrlDownload(url, 'TerminalCode.json');
+      doUrlDownload(url, 'CommandCodes.json');
       // 释放 URL 对象
       URL.revokeObjectURL(url);
     };
-    // 终端代码中心
-    const tCodeCenterRef = ref();
-    const handleSaveTCode = (name, content) => {
+    // 命令代码中心
+    const cmdCodeCenterRef = ref();
+    const handleSaveCmdCode = (name, content) => {
       const data = {};
       data[name] = {
-        desc: tcodes.value[name].desc || '',
+        desc: cmdcodes.value[name].desc || '',
         workflow: content || '',
         status: 'Not Active',
       };
-      importTCodes(data);
+      importCmdCodes(data);
     };
-    const handleDeleteTCode = (name) => {
-      delete tcodes.value[name];
-      importTCodes({});
+    const handleDeleteCmdCode = (name) => {
+      delete cmdcodes.value[name];
+      importCmdCodes({});
     };
 
     // 监听窗口大小变化，自动调整终端大小
@@ -1153,8 +1156,8 @@ export default {
       env,
       urlParams,
       options,
-      now_connect_status,
-      connect_status,
+      currentConnectStatus,
+      connectStatusMap,
       terminal,
       doSSHConnect,
       socket,
@@ -1174,15 +1177,15 @@ export default {
       doHeartBeat,
       saveOp,
       deleteOp,
-      tcode,
-      tcodes,
-      tCodeWorkflowRef,
-      handleTCode,
-      importTCodes,
-      exportTCodes,
-      tCodeCenterRef,
-      handleSaveTCode,
-      handleDeleteTCode,
+      cmdcode,
+      cmdcodes,
+      cmdCodeWorkflowRef,
+      handleCmdCode,
+      importCmdCodes,
+      exportCmdCodes,
+      cmdCodeCenterRef,
+      handleSaveCmdCode,
+      handleDeleteCmdCode,
       closeBlock,
       resetTerminal,
       sendMessage,
@@ -1299,6 +1302,11 @@ export default {
   pointer-events: none;
   color: #a8abb2;
   background-color: #f5f7fa;
+}
+
+.cmdcode-name {
+  background-color: #f3f4f4;
+  user-select: text;
 }
 
 .trans-items {

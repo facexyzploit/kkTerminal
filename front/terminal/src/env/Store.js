@@ -1,19 +1,20 @@
 export const localStore = {
-    'tcodes': 'tcodes',
-    'tcode-vars': 'tcode-local-vars',
-    'tcode-draft': 'tcode-draft',
+    'cmdcodes': 'cmdcodes',
+    'cmdcode-vars': 'cmdcode-local-vars',
+    'cmdcode-draft': 'cmdcode-draft',
     'user': 'user',
     'options': 'options',
     'env': 'env',
     'lang': 'lang',
+    'version': 'version',
 };
 
 export const sessionStore = {
-    'tcode-vars': 'tcode-session-vars-',
+    'cmdcode-vars': 'cmdcode-session-vars-',
 };
 
 export const cloudStore = {
-    'tcodes': 'tcodes',
+    'cmdcodes': 'cmdcodes',
     'options': 'options',
     'env': 'env',
 };

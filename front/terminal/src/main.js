@@ -1,10 +1,10 @@
 // 浏览器窗口广播
-import { initChannel } from "@/utils/ChannelUtil";
+import { initChannel } from "@/utils/Channel";
 initChannel();
 
 // jQuery配置Ajax全局响应拦截，进行数据解密
-import { ajaxSetup } from "@/utils/RequestUtil";
-ajaxSetup();
+import { setupAjax } from "@/utils/Request";
+setupAjax();
 
 import { createApp } from 'vue';
 import App from './App.vue';
@@ -45,7 +45,7 @@ const debounce = (fn, delay) => {
             fn.apply(context, args);
         }, delay);
     }
-}
+};
 const _ResizeObserver = window.ResizeObserver;
 window.ResizeObserver = class ResizeObserver extends _ResizeObserver {
     constructor(callback) {

@@ -12,9 +12,9 @@
 import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 
-import { request } from "@/utils/RequestUtil";
-import { http_base_url } from '@/env/BaseUrl';
-import { syncDownload } from "@/utils/CloudUtil";
+import { request } from "@/utils/Request";
+import { http_base_url } from '@/env/Base';
+import { syncDownload } from "@/utils/Cloud";
 import { secretKeySetter } from "@/utils/Encrypt";
 
 export default {

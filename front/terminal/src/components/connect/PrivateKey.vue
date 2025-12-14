@@ -27,7 +27,7 @@
       <div class="kk-flex" >
         <div class="form-width" >{{ $t('密码') }}{{ $t('：') }}</div>
         <div style="flex: 1;" >
-          <el-input size="small" v-model="passphrase" @keydown.enter="confirm" class="w-50 m-2" :placeholder="$t('请输入私钥密码')" >
+          <el-input size="small" v-model="passphrase" type="password" @keydown.enter="confirm" class="w-50 m-2" :placeholder="$t('请输入私钥密码')" >
             <template #prefix>
               <el-icon class="el-input__icon" ><Key /></el-icon>
             </template>
@@ -134,6 +134,6 @@ export default {
 }
 
 .form-width {
-  width: 56px;
+  width: 48px;
 }
 </style>

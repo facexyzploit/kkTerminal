@@ -51,7 +51,7 @@ export default {
     const err_msg = ref('');
     const isDirectory = ref(false);
     const name = ref('');
-    const nowDir = ref('');
+    const currentDir = ref('');
 
     // 确定
     const confirm = () => {
@@ -66,7 +66,7 @@ export default {
         err_msg.value = i18n.global.k("文件名不能含有") + " |" + i18n.global.t('，') + "/";
         return;
       }
-      context.emit('callback', isDirectory.value, name.value, nowDir.value);
+      context.emit('callback', isDirectory.value, name.value, currentDir.value);
       closeDialog();
     };
 
@@ -75,7 +75,7 @@ export default {
       err_msg.value = '';
       isDirectory.value = false;
       name.value = '';
-      nowDir.value = '';
+      currentDir.value = '';
       DialogVisible.value = false;
     };
 
@@ -93,7 +93,7 @@ export default {
       err_msg,
       isDirectory,
       name,
-      nowDir,
+      currentDir,
       confirm,
       closeDialog,
       reset,

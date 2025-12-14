@@ -113,13 +113,13 @@
 <script>
 import { ref } from 'vue';
 import AceEditor from '@/components/common/AceEditor';
-import { request } from "@/utils/RequestUtil";
+import { request } from "@/utils/Request";
 import useClipboard from "vue-clipboard3";
 import { ElMessage } from 'element-plus';
 import { previewFileInfo } from '@/components/preview/FileSuffix';
-import { changeStr2 } from '@/utils/StringUtil';
-import { getUrlParams } from "@/utils/UrlUtil";
-import { encodeStrToArray, decodeArrayToStr } from "@/components/preview/EncodeUtil";
+import { changeStr2 } from '@/utils/String';
+import { getUrlParams } from "@/utils/Url";
+import { encodeStrToArray, decodeArrayToStr } from "@/components/preview/Encode";
 import { ArrowDown, DocumentCopy } from '@element-plus/icons-vue';
 import FileIcons from 'file-icons-vue';
 import i18n from "@/locales/i18n";

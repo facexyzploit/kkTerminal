@@ -272,15 +272,15 @@
 import DockerContainerViewer from "./DockerContainerViewer";
 import NoData from "@/components/common/NoData";
 import { computed, ref } from "vue";
-import { request } from "@/utils/RequestUtil";
-import { http_base_url } from "@/env/BaseUrl";
+import { request } from "@/utils/Request";
+import { http_base_url } from "@/env/Base";
 import { ArrowDown, ArrowLeft, Search, Document, Operation } from '@element-plus/icons-vue';
 import i18n from "@/locales/i18n";
 import { ElMessage } from "element-plus";
 import { deleteDialog } from "@/components/common/DeleteDialog";
 import useClipboard from "vue-clipboard3";
 import { dockerAppTypes, dockerAppStore } from "./DockerAppStore";
-import { generateRandomString } from "@/utils/StringUtil";
+import { generateRandomString } from "@/utils/String";
 
 export default {
   name: 'DockerBlock',
